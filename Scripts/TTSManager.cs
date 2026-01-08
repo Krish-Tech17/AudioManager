@@ -1,7 +1,7 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
+using System.Text.RegularExpressions;
 public class TTSManager : MonoBehaviour
 {
     public static TTSManager Instance;
@@ -11,7 +11,7 @@ public class TTSManager : MonoBehaviour
 
     private Queue<string> ttsQueue = new Queue<string>();
     private bool isSpeaking = false;
-
+    private string cleanedText="";
     private void Awake()
     {
         if (Instance == null)
@@ -44,10 +44,12 @@ public class TTSManager : MonoBehaviour
     // ----------------------------------------------------------------------
     public void SpeakInQueue(string text)
     {
-        if (string.IsNullOrEmpty(text))
+        cleanedText = Regex.Replace(text, @"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*", " ").Trim();
+
+        if (string.IsNullOrEmpty(cleanedText))
             return;
 
-        ttsQueue.Enqueue(text);
+        ttsQueue.Enqueue(cleanedText);
 
         if (!isSpeaking)
             TrySpeakNext();
@@ -58,13 +60,15 @@ public class TTSManager : MonoBehaviour
     // ----------------------------------------------------------------------
     public void StopAndSpeak(string text)
     {
-        if (string.IsNullOrEmpty(text))
+        cleanedText = Regex.Replace(text,@"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*"," ").Trim();
+
+        if (string.IsNullOrEmpty(cleanedText))
             return;
 
         Stop();                // Stop TTS immediately
         ttsQueue.Clear();      // Remove all queued text
 
-        ttsQueue.Enqueue(text);
+        ttsQueue.Enqueue(cleanedText);
         TrySpeakNext();
     }
 
