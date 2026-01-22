@@ -11,7 +11,7 @@ public class TTSManager : MonoBehaviour
 
     private Queue<string> ttsQueue = new Queue<string>();
     private bool isSpeaking = false;
-    private string cleanedText="";
+    private string cleanedText = "";
     private void Awake()
     {
         if (Instance == null)
@@ -25,17 +25,17 @@ public class TTSManager : MonoBehaviour
             return;
         }
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
         WindowsTTS.initSpeech();
 
-#elif UNITY_ANDROID              
+#elif UNITY_ANDROID
         // TODO: Initialize Android TTS
 
-#elif UNITY_IOS          
+#elif UNITY_IOS
         // TODO: Initialize iOS TTS
 
-#elif UNITY_STANDALONE_OSX                     
-        // TODO: Initialize macOS TTS
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+        MacTTS.Init();
 #endif
     }
 
@@ -60,7 +60,7 @@ public class TTSManager : MonoBehaviour
     // ----------------------------------------------------------------------
     public void StopAndSpeak(string text)
     {
-        cleanedText = Regex.Replace(text,@"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*"," ").Trim();
+        cleanedText = Regex.Replace(text, @"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*", " ").Trim();
 
         if (string.IsNullOrEmpty(cleanedText))
             return;
@@ -79,7 +79,7 @@ public class TTSManager : MonoBehaviour
     {
         StopAllCoroutines();
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
         WindowsTTS.stopCurrentSpeech();
         WindowsTTS.clearSpeechQueue();
 #elif UNITY_ANDROID              
@@ -88,8 +88,8 @@ public class TTSManager : MonoBehaviour
 #elif UNITY_IOS          
         // TODO: Stop iOS speech
 
-#elif UNITY_STANDALONE_OSX                     
-        // TODO: Stop macOS speech
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX                    
+        MacTTS.Stop();
 
 #endif
 
@@ -123,22 +123,23 @@ public class TTSManager : MonoBehaviour
 
         isSpeaking = true;
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
         WindowsTTS.clearSpeechQueue();
         WindowsTTS.addToSpeechQueue(text);
         StartCoroutine(CheckWindowsEnd());
-#elif UNITY_ANDROID              
+#elif UNITY_ANDROID
         // TODO: Android Speak
 
-#elif UNITY_IOS          
+#elif UNITY_IOS
         // TODO: iOS Speak
 
-#elif UNITY_STANDALONE_OSX                     
-        // TODO: macOS Speak
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+        MacTTS.Speak(text);
+        StartCoroutine(CheckMacEnd());
 #endif
     }
 
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
     private IEnumerator CheckWindowsEnd()
     {
         while (true)
@@ -156,20 +157,31 @@ public class TTSManager : MonoBehaviour
     }
 #endif
 
+#if UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+    private IEnumerator CheckMacEnd()
+    {
+        while (MacTTS.IsSpeaking())
+            yield return null;
+
+        isSpeaking = false;
+        TrySpeakNext();
+    }
+#endif
+
     private void OnApplicationQuit()
     {
-#if UNITY_STANDALONE_WIN
+#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
         WindowsTTS.destroySpeech();
 
-#elif UNITY_ANDROID              
+#elif UNITY_ANDROID
         // TODO: Android functionality
 
-#elif UNITY_IOS          
+#elif UNITY_IOS
         // TODO: iOS functionality
 
 
-#elif UNITY_STANDALONE_OSX                     
-        // TODO: macOS functionality
+#elif UNITY_EDITOR_OSX || UNITY_STANDALONE_OSX
+        MacTTS.Stop();
 
 #endif
     }
