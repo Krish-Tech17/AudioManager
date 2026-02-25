@@ -25,7 +25,7 @@ public class TTSManager : MonoBehaviour
             return;
         }
 
-#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
+#if UNITY_STANDALONE_WIN
         WindowsTTS.initSpeech();
 
 #elif UNITY_ANDROID
@@ -79,7 +79,7 @@ public class TTSManager : MonoBehaviour
     {
         StopAllCoroutines();
 
-#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
+#if UNITY_STANDALONE_WIN
         WindowsTTS.stopCurrentSpeech();
         WindowsTTS.clearSpeechQueue();
 #elif UNITY_ANDROID              
@@ -123,7 +123,7 @@ public class TTSManager : MonoBehaviour
 
         isSpeaking = true;
 
-#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
+#if UNITY_STANDALONE_WIN
         WindowsTTS.clearSpeechQueue();
         WindowsTTS.addToSpeechQueue(text);
         StartCoroutine(CheckWindowsEnd());
@@ -139,7 +139,7 @@ public class TTSManager : MonoBehaviour
 #endif
     }
 
-#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
+#if UNITY_STANDALONE_WIN
     private IEnumerator CheckWindowsEnd()
     {
         while (true)
@@ -170,7 +170,7 @@ public class TTSManager : MonoBehaviour
 
     private void OnApplicationQuit()
     {
-#if UNITY_STANDALONE_WIN && UNITY_EDITOR_WIN
+#if UNITY_STANDALONE_WIN
         WindowsTTS.destroySpeech();
 
 #elif UNITY_ANDROID
