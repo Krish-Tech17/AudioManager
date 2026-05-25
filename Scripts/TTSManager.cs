@@ -72,9 +72,18 @@ public class TTSManager : MonoBehaviour
         TrySpeakNext();
     }
 
-    // ----------------------------------------------------------------------
-    // Like AudioManager.Stop()
-    // ----------------------------------------------------------------------
+    public void WaitForCurrentSpeechToEnd(System.Action callback)
+    {
+        StartCoroutine(WaitForSpeechEndCoroutine(callback));
+    }
+    private IEnumerator WaitForSpeechEndCoroutine(System.Action callback)
+    {
+        while (isSpeaking)
+            yield return null;
+
+        callback?.Invoke();
+    }
+
     public void Stop()
     {
         StopAllCoroutines();
