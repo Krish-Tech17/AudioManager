@@ -318,11 +318,12 @@ public class TTSManager : MonoBehaviour
         // MOV-857068
         // V406377
         // AB12CD34 etc.
-        return Regex.Replace(text, @"\b[A-Z]+-?\d+\b", match =>
-        {
-            string value = match.Value.Replace("-", "");
+        return Regex.Replace(text, @"\b[A-Z0-9-]{2,}\b", match =>
+    {
+        string value = match.Value.Replace("-", "");
 
-            return string.Join(" ", value.ToCharArray());
-        });
+        return string.Join(" ", value.ToCharArray());
+    });
+
     }
 }
