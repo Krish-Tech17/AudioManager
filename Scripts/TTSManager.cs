@@ -306,11 +306,54 @@ public class TTSManager : MonoBehaviour
 
     private string CleanText(string text)
     {
-        text = Regex.Replace(text, @"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*", " ").Trim();
+        if (string.IsNullOrEmpty(text))
+            return string.Empty;
 
-        return FormatEquipmentCodes(text);
+        // Convert < and > to spoken words
+        text = ConvertComparisonSymbols(text);
+
+        // Convert PSIG to spoken "gauge pressure" (before equipment code formatting
+        // so it isn't spelled out letter-by-letter)
+        text = ConvertPsig(text);
+
+        // Format equipment codes
+        text = FormatEquipmentCodes(text);
+
+        // Remove new lines and text inside brackets
+        text = Regex.Replace(
+            text,
+            @"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*|\s*/\s*|\s*'\s*",
+            " "
+        ).Trim();
+        return text;
     }
 
+    // ---------------------------------------------------------
+    // COMPARISON SYMBOL CONVERSION
+    // ---------------------------------------------------------
+    private string ConvertComparisonSymbols(string text)
+    {
+        text = Regex.Replace(text, @"\s*<\s*", " less than ");
+        text = Regex.Replace(text, @"\s*>\s*", " greater than ");
+
+        // Collapse any double spaces created by the replacement
+        text = Regex.Replace(text, @"\s+", " ").Trim();
+
+        return text;
+    }
+
+    // ---------------------------------------------------------
+    // PSIG CONVERSION
+    // ---------------------------------------------------------
+    private string ConvertPsig(string text)
+    {
+        return Regex.Replace(
+            text,
+            @"\bpsig\b",
+            "gauge pressure",
+            RegexOptions.IgnoreCase
+        );
+    }
 
     private string FormatEquipmentCodes(string text)
     {
@@ -319,11 +362,40 @@ public class TTSManager : MonoBehaviour
         // V406377
         // AB12CD34 etc.
         return Regex.Replace(text, @"\b[A-Z0-9-]{2,}\b", match =>
-    {
-        string value = match.Value.Replace("-", "");
+        {
+            string value = match.Value.Replace("-", " ");
 
-        return string.Join(" ", value.ToCharArray());
-    });
+            // If it's a pure 2-digit number (not an alphanumeric equipment code),
+            // read it as a whole number, e.g. "10" -> "ten"
+            if (value.Length == 2 && Regex.IsMatch(value, @"^\d{2}$"))
+            {
+                int number = int.Parse(value);
+                return NumberToWords(number);
+            }
 
+            // Otherwise, spell it out character by character (existing behavior)
+            return string.Join(" ", value.ToCharArray());
+        });
     }
+
+    private string NumberToWords(int number)
+    {
+        if (number == 0) return "zero";
+
+        string[] unitsMap = { "zero", "one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+                           "ten", "eleven", "twelve", "thirteen", "fourteen", "fifteen", "sixteen",
+                           "seventeen", "eighteen", "nineteen" };
+        string[] tensMap = { "zero", "ten", "twenty", "thirty", "forty", "fifty", "sixty", "seventy", "eighty", "ninety" };
+
+        if (number < 20)
+            return unitsMap[number];
+
+        string words = tensMap[number / 10];
+        if ((number % 10) > 0)
+            words += " " + unitsMap[number % 10];
+
+        return words;
+    }
+
+
 }
