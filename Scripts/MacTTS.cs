@@ -4,7 +4,7 @@ using System.Diagnostics;
 public static class MacTTS
 {
     private static Process process;
-
+    private static string currentVoice = "Samantha";
     public static void Init()
     {
 
@@ -16,7 +16,8 @@ public static class MacTTS
 
         process = new Process();
         process.StartInfo.FileName = "say";
-        process.StartInfo.Arguments = text;
+        process.StartInfo.Arguments = $"-v \"{currentVoice}\" -r 180 \"{EscapeText(text)}\"";
+        //process.StartInfo.Arguments = text;
         process.StartInfo.UseShellExecute = false;
         process.Start();
     }
@@ -28,6 +29,16 @@ public static class MacTTS
             process.Kill();
             process = null;
         }
+    }
+
+    private static string EscapeText(string text)
+    {
+        if (string.IsNullOrEmpty(text))
+            return "";
+
+        // Escape quotes for shell-style argument handling
+        return text.Replace("\\", "\\\\")
+                   .Replace("\"", "\\\"");
     }
 
     public static bool IsSpeaking()

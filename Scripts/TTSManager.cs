@@ -308,6 +308,9 @@ public class TTSManager : MonoBehaviour
     {
         if (string.IsNullOrEmpty(text))
             return string.Empty;
+        text = text.Replace("/", " ");
+        text = Regex.Replace(text, @"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*", " ").Trim();
+
 
         // Convert < and > to spoken words
         text = ConvertComparisonSymbols(text);
@@ -357,24 +360,24 @@ public class TTSManager : MonoBehaviour
 
     private string FormatEquipmentCodes(string text)
     {
-        // Matches:
-        // MOV-857068
-        // V406377
-        // AB12CD34 etc.
-        return Regex.Replace(text, @"\b[A-Z0-9-]{2,}\b", match =>
+        return Regex.Replace(text, @"(?<![A-Za-z0-9])[A-Z0-9]+(?:[-_][A-Z0-9]+)*(?![A-Za-z0-9])", match =>
         {
-            string value = match.Value.Replace("-", " ");
+            List<string> spokenParts = new List<string>();
+            MatchCollection parts = Regex.Matches(match.Value, @"[A-Z]+|\d+");
 
-            // If it's a pure 2-digit number (not an alphanumeric equipment code),
-            // read it as a whole number, e.g. "10" -> "ten"
-            if (value.Length == 2 && Regex.IsMatch(value, @"^\d{2}$"))
+            foreach (Match part in parts)
             {
-                int number = int.Parse(value);
-                return NumberToWords(number);
+                if (Regex.IsMatch(part.Value, @"^\d{2}$"))
+                {
+                    spokenParts.Add(NumberToWords(int.Parse(part.Value)));
+                }
+                else
+                {
+                    spokenParts.Add(string.Join(" ", part.Value.ToCharArray()));
+                }
             }
 
-            // Otherwise, spell it out character by character (existing behavior)
-            return string.Join(" ", value.ToCharArray());
+            return string.Join(" ", spokenParts);
         });
     }
 
