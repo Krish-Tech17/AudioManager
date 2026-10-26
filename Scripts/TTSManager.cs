@@ -311,7 +311,7 @@ public class TTSManager : MonoBehaviour
         text = text.Replace("/", " ");
         text = Regex.Replace(text, @"(\\n|\\r|\r\n|\n)+|\s*\([^)]*\)\s*", " ").Trim();
 
-
+        text = text.Replace(".", ", ");
         // Convert < and > to spoken words
         text = ConvertComparisonSymbols(text);
 
